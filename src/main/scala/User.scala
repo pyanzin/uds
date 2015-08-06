@@ -1,20 +1,23 @@
 package uds
 
-case class User(
+import uds.graph._
+
+case class User (
   id: Long,
   firstName: String,
   lastName: String,
   gender: Option[Boolean],
   birthDate: Option[String],
   cityId: Option[Int]
-)
+) extends VkNode
 
 object User {
   implicit class UserExt(u: User) {
     val fullDateR = """(\d+).(\d+).(\d+)""".r
 
     def birthYear = u.birthDate map {
-      case fullDateR(_, _, y) => y.toInt
+      case fullDateR(_, _, y) => Some(y.toInt)
+      case _ => None
     }
 
     private def sameName(a: String, b: String) = {
