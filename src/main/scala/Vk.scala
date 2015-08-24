@@ -53,7 +53,7 @@ package object uds
 
       def vkMethod(method: String, params: (String, String)*) =
           httpRequest(s"https://api.vk.com/method/$method",
-            (("access_token" -> token) :: params.toList): _* )
+            (("lang" -> "3") :: ("access_token" -> token) :: params.toList): _* )
 
       def getUsers(ids: Long *) = {
         val f = vkMethod("users.get", 
