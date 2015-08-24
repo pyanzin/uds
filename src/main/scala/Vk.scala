@@ -25,14 +25,25 @@ package object uds
         )
     }
 
-    class Vk(val token: String) {
+    class Vk(val token: String, delay: Int = 400) {
       implicit val formats = DefaultFormats
       import net.liftweb.json.JsonParser._
+
+      var lastReqTime: Long = 0
 
       def req(u: String) = {
         val svc = url(u)
         val future = Http(svc OK as.String)
         future()
+      }
+
+      def delayedReq(u: String) = {
+        val diff = System.currentTimeMillis - lastReqTime 
+        if (diff < delay)
+          Thread.sleep(diff)
+        val result = req(u)
+        lastReqTime = System.currentTimeMillis
+        result
       }
 
       def httpRequest(url: String, params: (String, String) *) = {
@@ -45,7 +56,6 @@ package object uds
             (("access_token" -> token) :: params.toList): _* )
 
       def getUsers(ids: Long *) = {
-        Thread.sleep(400)
         val f = vkMethod("users.get", 
           "user_ids" -> ids.mkString(","),
           "fields" -> List("bdate", "city", "sex").mkString(",")
@@ -55,7 +65,6 @@ package object uds
       }
 
       def getFriends(id: Long) = {
-        Thread.sleep(400)
         val f = vkMethod("friends.get", "user_id" -> id.toString)
         (parse(f) \\ "response").extract[List[Long]]
       }
