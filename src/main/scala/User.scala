@@ -12,12 +12,11 @@ case class User (
 ) extends VkNode
 
 object User {
-  implicit class UserExt(u: User) {
-    val fullDateR = """(\d+).(\d+).(\d+)""".r
+  val fullDateR = """(\d+).(\d+).(\d{4})""".r
 
-    def birthYear = u.birthDate map {
-      case fullDateR(_, _, y) => Some(y.toInt)
-      case _ => None
+  implicit class UserExt(u: User) {
+    def birthYear = u.birthDate collect {
+      case fullDateR(_, _, y) => y.toInt
     }
 
     private def sameName(a: String, b: String) = {

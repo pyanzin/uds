@@ -1,4 +1,4 @@
-package uds.graph
+package uds
 
 import uds._
 import scalax.collection.Graph
@@ -7,10 +7,14 @@ import scalax.collection.GraphEdge._
 import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 
-trait VkNode
-
-trait SimpleProp[T] extends VkNode {
-  val value: T
+package object graph {
+  trait VkNode
+  
+  type VkGraph = Graph[VkNode, LUnDiEdge]
+  
+  trait SimpleProp[T] extends VkNode {
+    val value: T
+  }
+  
+  case class FriendsCount[Int](value: Int) extends SimpleProp[Int]
 }
-
-case class FriendsCount[Int](value: Int) extends SimpleProp[Int]

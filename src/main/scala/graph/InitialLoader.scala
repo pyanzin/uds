@@ -7,8 +7,8 @@ import scalax.collection.GraphEdge._
 import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 
-class InitialLoader(vk: Vk) extends Block[Long, Graph[VkNode, LUnDiEdge]] {
-  def apply(id: Long): Graph[VkNode, LUnDiEdge] = {
+class InitialLoader(vk: Vk) extends Block[Long, VkGraph] {
+  def apply(id: Long): VkGraph = {
     val friendIds = vk.getFriends(id)
     val friends = vk.getUsers(id :: friendIds:_*)
     val index = friends.map(x => x.id -> x).toMap
