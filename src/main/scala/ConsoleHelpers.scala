@@ -4,7 +4,7 @@ package object ConsoleHelpers {
   def printAgeDistr(id: Long) = {
     import uds._, uds.graph._
 
-    val vk = new Vk("", 400)
+    val vk = new Vk("", 0)
 
     val g = (new InitialLoader(vk))(id)
 
@@ -14,6 +14,9 @@ package object ConsoleHelpers {
 
     val d = analyzer.getProp(g)
 
-    d.toList.sortBy(_._1).foreach(x => println(s"""${x._1}\t${"*"*x._2}"""))
+    val absolute = 80
+    val count = d.size.toDouble
+
+    d.toList.sortBy(_._1).foreach(x => println(s"""${x._1}\t${"*"*(x._2 / count * absolute).toInt }"""))
   }
 }

@@ -10,7 +10,7 @@ import scalax.collection.edge.Implicits._
 class InitialLoader(vk: Vk) extends Block[Long, VkGraph] {
   def apply(id: Long): VkGraph = {
     val friendIds = vk.getFriends(id)
-    val friends = vk.getUsers(id :: friendIds:_*)
+    val friends = (id :: friendIds).grouped(250).flatMap(vk.getUsers(_:_*)).toList
     val index = friends.map(x => x.id -> x).toMap
 
     val rels = id :: friendIds flatMap { x =>
