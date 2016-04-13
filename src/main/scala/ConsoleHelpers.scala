@@ -1,6 +1,7 @@
 package uds
 
 package object ConsoleHelpers {
+  import uds.graph._
   def printAgeDistr(id: Long) = {
     import uds._, uds.graph._
 
@@ -42,4 +43,32 @@ package object ConsoleHelpers {
       (x, dist.getOrElse(x, 0))
     }
   }
+
+  def toD3Graph(graph: VkGraph): String = {
+    import net.liftweb.json._
+
+    val nodes = graph.nodes.toList
+
+    val nodesJ = JArray(nodes.map(x => x.value match { case u: User =>
+    JObject(List(JField("name", JString(s"${u.firstName} ${u.lastName}")),
+    JField("group", JDouble(u.cityId.getOrElse(0).toDouble))))}))
+
+    val index = nodes.zipWithIndex.toMap
+    val pairs = graph.edges.map(x => index(x.head) -> index(x.last))
+
+    val edgesJ = JArray(pairs.map(_ match { case (a, b) => 
+      JObject(List(
+        JField("source", JDouble(a)),
+        JField("target", JDouble(b)),
+        JField("value", JDouble(1)))
+      )
+    }).toList)
+
+    val ast = JObject(List(
+        JField("nodes", nodesJ),
+        JField("links", edgesJ)
+      ))
+    
+    pretty(render(ast))
+}
 }
