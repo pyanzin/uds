@@ -25,7 +25,7 @@ package object uds
         )
     }
 
-    class Vk(val token: String, delay: Int = 400) {
+    class Vk(val token: String, delay: Int = 0) {
       implicit val formats = DefaultFormats
       import net.liftweb.json.JsonParser._
 
@@ -58,7 +58,7 @@ package object uds
       def getUsers(ids: Long *) = {
         val f = vkMethod("users.get", 
           "user_ids" -> ids.mkString(","),
-          "fields" -> List("bdate", "city", "sex").mkString(",")
+          "fields" -> List("bdate", "city", "sex", "photo_50").mkString(",")
         )
         val JArray(usersJson) = parse(f) \\ "response" 
         usersJson map toUser

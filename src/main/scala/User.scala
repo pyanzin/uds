@@ -22,7 +22,7 @@ object User {
     private def sameName(a: String, b: String) = {
       def isRootsEquals(s1: String, s2: String) = {
         def getRoot(s: String) =
-          if (s.length > 5) s else s.substring(0, s.length - 2)
+          if (s.length < 5) s else s.substring(0, s.length - 2)
 
         getRoot(s1) == getRoot(s2)
       }

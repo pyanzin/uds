@@ -46,22 +46,25 @@ package object ConsoleHelpers {
 
   def toD3Graph(graph: VkGraph): String = {
     import net.liftweb.json._
+    import net.liftweb.json.Extraction.decompose
 
+    implicit val formats = Serialization.formats(NoTypeHints)
     val nodes = graph.nodes.toList
 
-    val nodesJ = JArray(nodes.map(x => x.value match { case u: User =>
-    JObject(List(JField("name", JString(s"${u.firstName} ${u.lastName}")),
-    JField("group", JDouble(u.cityId.getOrElse(0).toDouble))))}))
+    val nodesJ = decompose(nodes.map(_.value))
 
     val index = nodes.zipWithIndex.toMap
-    val pairs = graph.edges.map(x => index(x.head) -> index(x.last))
+    val pairs = graph.edges.map(x => x.head -> x.last)
 
+    def rel(a: graph.NodeT, b: graph.NodeT) = {
+      a.value.asInstanceOf[User] hasSameName b.value.asInstanceOf[User]
+    }
     val edgesJ = JArray(pairs.map(_ match { case (a, b) => 
       JObject(List(
-        JField("source", JDouble(a)),
-        JField("target", JDouble(b)),
-        JField("value", JDouble(1)))
-      )
+        JField("source", JDouble(index(a))),
+        JField("target", JDouble(index(b))),
+        JField("value", JBool(rel(a, b)))
+      ))
     }).toList)
 
     val ast = JObject(List(
