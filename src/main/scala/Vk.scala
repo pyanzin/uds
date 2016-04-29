@@ -4,7 +4,6 @@ import scala.concurrent.ExecutionContext.Implicits.global._
 
 package object uds
 {
-
     def toUser(x: JValue) = {
         User(x \ "uid" match { case JInt(x) => x.toLong },
           x \ "first_name" match { case JString(x) => x },
@@ -21,15 +20,20 @@ package object uds
           x \ "city" match {
             case JInt(x) => Some(x.toInt)
             case _ => None
+          },
+          x \ "photo_50" match {
+            case JString(x) => x
           }
         )
     }
 
-    class Vk(val token: String, delay: Int = 0) {
+    class Vk(val token: String, delay: Int = 400) {
       implicit val formats = DefaultFormats
       import net.liftweb.json.JsonParser._
 
       var lastReqTime: Long = 0
+
+      var cache: Map[String, String] = Map()
 
       def req(u: String) = {
         val svc = url(u)
@@ -48,7 +52,13 @@ package object uds
 
       def httpRequest(url: String, params: (String, String) *) = {
         val prms = params.map{ x => x._1 + "=" + x._2 }.mkString("&")
-        req(s"$url?$prms")
+        val request = s"$url?$prms"
+
+        cache.get(request).getOrElse {
+          var result = req(request)
+          cache += request -> result
+          result
+        }
       }
 
       def vkMethod(method: String, params: (String, String)*) =

@@ -8,7 +8,8 @@ case class User (
   lastName: String,
   gender: Option[Boolean],
   birthDate: Option[String],
-  cityId: Option[Int]
+  cityId: Option[Int],
+  photoUrl: String
 ) extends VkNode
 
 object User {

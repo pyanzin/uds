@@ -46,6 +46,8 @@ package uds {
         "pass" -> password
       )
 
+      println(uri)
+
       val params = uri.split("#")(1).split("&").map(_.split("=")).map(x => x(0) -> x(1)).toMap
 
       params("access_token")
