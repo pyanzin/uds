@@ -21,7 +21,7 @@ package object uds
             case JInt(x) => Some(x.toInt)
             case _ => None
           },
-          x \ "photo_50" match {
+          x \ "photo_100" match {
             case JString(x) => x
           }
         )
@@ -68,7 +68,7 @@ package object uds
       def getUsers(ids: Long *) = {
         val f = vkMethod("users.get", 
           "user_ids" -> ids.mkString(","),
-          "fields" -> List("bdate", "city", "sex", "photo_50").mkString(",")
+          "fields" -> List("bdate", "city", "sex", "photo_100").mkString(",")
         )
         val JArray(usersJson) = parse(f) \\ "response" 
         usersJson map toUser
