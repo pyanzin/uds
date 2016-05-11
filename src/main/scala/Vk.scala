@@ -27,6 +27,10 @@ package object uds
         )
     }
 
+    def toCityPair(x: JValue): (String, String) = {
+      (x \ "cid" match { case JInt(id) => id.toString }, x \ "name" match { case JString(name) => name })
+    }
+
     class Vk(val token: String, delay: Int = 400) {
       implicit val formats = DefaultFormats
       import net.liftweb.json.JsonParser._
@@ -77,6 +81,14 @@ package object uds
       def getFriends(id: Long) = {
         val f = vkMethod("friends.get", "user_id" -> id.toString)
         (parse(f) \\ "response").extract[List[Long]]
+      }
+
+      def getCities(ids: Int *): Map[String, String] = {
+        val f = vkMethod("database.getCitiesById", "city_ids" -> ids.mkString(","))
+
+        val JArray(citiesJson) = parse(f) \\ "response"
+
+        citiesJson.map(toCityPair).toMap
       }
     }
 }
