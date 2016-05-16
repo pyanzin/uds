@@ -90,5 +90,11 @@ package object uds
 
         citiesJson.map(toCityPair).toMap
       }
+
+      def withFields[T: Manifest](method: String, params: (String, String)*) = {
+        val fields = "fields" -> manifest[T].runtimeClass.getDeclaredFields.map(_.getName).mkString(",")
+        val response = parse(vkMethod(method, fields :: params.toList: _*)) \\ "response"
+        response.extract[List[T]]
+      }
     }
 }
