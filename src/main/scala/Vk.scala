@@ -69,7 +69,7 @@ package object uds
           httpRequest(s"https://api.vk.com/method/$method",
             (("lang" -> "3") :: ("access_token" -> token) :: params.toList): _* )
 
-      def getUsers(ids: Long *) = {
+      def getUsers(ids: Any *) = {
         val f = vkMethod("users.get", 
           "user_ids" -> ids.mkString(","),
           "fields" -> List("bdate", "city", "sex", "photo_100").mkString(",")
@@ -78,7 +78,7 @@ package object uds
         usersJson map toUser
       }
 
-      def getFriends(id: Long) = {
+      def getFriends(id: Any) = {
         val f = vkMethod("friends.get", "user_id" -> id.toString)
         (parse(f) \\ "response").extract[List[Long]]
       }
