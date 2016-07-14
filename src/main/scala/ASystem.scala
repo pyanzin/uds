@@ -9,6 +9,46 @@ import akka.http.scaladsl.model._
 import scala.concurrent.Future
 import scala.util.{ Failure, Success }
 
+
+import uds._
+import uds.graph._
+
+case class AnalysisRequest(name: String, clientId: Long, targetId: Long)
+
+case class Progress(name: String, progress: Double)
+
+abstract class BaseAnalysisActor extends Actor {
+	def progress(x: Double) {
+		notificator ! Progress(name, x)
+	}
+
+	def name: String
+
+	def notificator = context.actorSelection("/user/notificator")
+}
+
+class InitialAnalysisActor extends Actor {
+	def receive = {
+		case ar: AnalysisRequest => {
+			val vk = new Vk("")
+	    	val loader = new InitialLoader(vk)
+	    	sender ! loader(ar.targetId)
+		}
+	}
+}
+
+//class ArbiterActor extends Actor {
+//
+//	def receive = {
+//		case ar: AnalysisRequest => {
+//			val a = context.actorOf(Props[InitialAnalysisActor])
+//			a ! ar
+//		}
+//    	case g: VkGraph => println(g)		
+//	}
+//}
+
+
 //package uds {
 //
 //	case class VkRequest
@@ -26,32 +66,3 @@ import scala.util.{ Failure, Success }
 //	}
 //
 //}//
-
-def analyze = {
-import uds._
-import uds.graph._
-
-class VkActor extends Actor {
-  def receive = {
-    case id: Long => {
-    	val vk = new Vk("")
-    	val loader = new InitialLoader(vk)
-    	sender ! loader(id)
-    }
-  }
-}
-
-class AnalyzerActor extends Actor {
-	def receive = {
-    	case id: Long => context.actorSelection("../vk") ! id
-    	case s: String => println(s)
-    	case g: VkGraph => println(g)
-  }
-}
-
-implicit val system = ActorSystem()
-
-val vkActor = system.actorOf(Props(new VkActor), "vk")
-val aActor = system.actorOf(Props(new AnalyzerActor), "analyzer")
-
-}
