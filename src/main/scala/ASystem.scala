@@ -12,6 +12,9 @@ import scala.util.{ Failure, Success }
 import dispatch._, Defaults._
 import net.liftweb.json._
 import scala.concurrent.ExecutionContext.Implicits.global._
+import akka.http.scaladsl.unmarshalling.Unmarshal
+import akka.http.scaladsl.model._
+import akka.util._
 
 import uds._
 import uds.graph._
@@ -34,22 +37,42 @@ class InitialAnalysisActor(targetId: Long, clientId: Long) extends BaseAnalysisA
 
 	val vk = context.actorOf(Props(new VkActor))
 
+	var rels = Seq[(Long, Long)]()
+	var users = Seq[User]()
+	var directFriendIds = Seq[Long]()
+	var toGetFriends = Set[Long]()
+
 	vk ! FriendsRequest(targetId)
 
 	def receive = {
-//		case ar: AnalysisRequest => {
-//			val vk = new Vk("")
-//	    	val loader = new InitialLoader(vk)
-//	    	sender ! loader(ar.targetId)
-//		}
-
-		case users: Seq[User] => {
-
+		case xs: Seq[User] => {
+			users ++= xs
 		}
 
-		case (id: Long, friendIds: Seq[Long]) => {
+		case FriendsRelations(id: Long, friendIds: Seq[Long]) => {
+			rels ++= friendIds.map(id -> _)
+			if (id == targetId) {	
+				directFriendIds = friendIds
 
+				toGetFriends = Set(friendIds: _*)
+
+				(List(id) ++ friendIds)
+					.grouped(250)
+					.map(x => UsersRequest(x: _*))
+					.foreach(vk ! _)
+
+				friendIds.foreach(x => vk ! FriendsRequest(x))
+			} else {
+				toGetFriends -= id
+
+				if (toGetFriends.isEmpty)
+					buildAndSendGraph()
+			}
 		}
+	}
+
+	def buildAndSendGraph() {
+		println("graph built")
 	}
 
 	def name = s"initial-$targetId-$clientId"
@@ -63,7 +86,12 @@ class VkActor extends Actor {
 			val future: Future[HttpResponse] = Http(context.system).singleRequest(HttpRequest(uri = request.uri))
 
 			future.onComplete {
-				case Success(x) => sender ! (request.convert(x.toString))				
+
+				case Success(x) => {
+					x.entity.dataBytes.runFold(ByteString(""))(_ ++ _).onComplete {
+						case Success(body) => context.parent ! request.convert(body.utf8String)
+					}
+				}			
 			}
 		}
 	}
@@ -72,31 +100,67 @@ class VkActor extends Actor {
 abstract class VkRequest[T] {
 	def uri: String 
 	def convert(s: String): T
+
+	def buildUri(base: String, params: (String, Any) *): String = {
+        val prms = params.map{ x => x._1 + "=" + x._2.toString }.mkString("&")
+        println(s"$base?$prms")
+        s"$base?$prms"
+    }
+
+	def buildVkUri(method: String, params: (String, Any)*): String =
+          buildUri(s"https://api.vk.com/method/$method",
+            (("lang" -> "3") :: params.toList): _* )
 }
 
 case class UsersRequest(ids: Long*) extends VkRequest[Seq[User]] {
 	implicit val formats = DefaultFormats
     import net.liftweb.json.JsonParser._
 
-	val uri = "https://api.vk.com/method/users.get?user_ids=" + ids.mkString(",")
+	val uri = buildVkUri("users.get",
+		"user_ids" -> ids.mkString(","),
+		"fields" -> List("bdate", "city", "sex", "photo_100").mkString(","))
 
 	def convert(s: String): Seq[User] = {
-		val usersJson = parse(s) \\ "response" 
-        usersJson.extract[List[User]]
+		val JArray(usersJson) = parse(s) \\ "response" 
+        usersJson map toUser
 	}
+
+	def toUser(x: JValue) = {
+        User(x \ "uid" match { case JInt(x) => x.toLong },
+          x \ "first_name" match { case JString(x) => x },
+          x \ "last_name" match { case JString(x) => x },
+          x \ "sex" match {
+            case JInt(s) if s == 1 => Some(false)
+            case JInt(s) if s == 2 => Some(true)
+            case _ => None
+          },
+          x \ "bdate" match {
+            case JString(x) => Some(x)
+            case _ => None
+          },
+          x \ "city" match {
+            case JInt(x) => Some(x.toInt)
+            case _ => None
+          },
+          x \ "photo_100" match {
+            case JString(x) => x
+          }
+        )
+    }
 }
 
-case class FriendsRequest(id: Long) extends VkRequest[(Long, Seq[Long])] {
+case class FriendsRequest(id: Long) extends VkRequest[FriendsRelations] {
 	implicit val formats = DefaultFormats
     import net.liftweb.json.JsonParser._
 
-	val uri = "https://api.vk.com/method/friends.get?user_id=" + id
+	val uri = buildVkUri("friends.get", "user_id" -> id)
 
-	def convert(s: String): (Long, Seq[Long]) = {
-		val usersJson = parse(s) \\ "response" 
-        id -> usersJson.extract[List[Long]]
+	def convert(s: String): FriendsRelations = {
+        FriendsRelations(id, (parse(s) \\ "response").extract[List[Long]])
 	}
 }
+
+case class FriendsRelations(targetId: Long, friendsIds: Seq[Long])
 
 //class ArbiterActor extends Actor {
 //
