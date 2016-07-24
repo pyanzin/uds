@@ -15,6 +15,8 @@ import scala.concurrent.ExecutionContext.Implicits.global._
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.model._
 import akka.util._
+import akka.stream.scaladsl._
+import akka.http.scaladsl.model.Uri.Path
 
 import uds._
 import uds.graph._
@@ -61,7 +63,7 @@ class InitialAnalysisActor(targetId: Long, clientId: Long) extends BaseAnalysisA
 					.map(x => UsersRequest(x: _*))
 					.foreach(vk ! _)
 
-				friendIds.foreach(x => vk ! FriendsRequest(x))
+				vk ! MultiFriendsRequest(friendIds.toList	)
 			} else {
 				toGetFriends -= id
 
@@ -79,9 +81,21 @@ class InitialAnalysisActor(targetId: Long, clientId: Long) extends BaseAnalysisA
 }
 
 class VkActor extends Actor {
+	def pathToRequest(path : String) = HttpRequest(uri=Uri.Empty.withPath(Path(path)))
+
+
 	def receive = {
-		case request: VkRequest[_] => {
+		case request: MultiFriendsRequest => {
+			val source = Source(request.uris)
+			val conn = Http(context.system).outgoingConnection("api.vk.com")
+			val reqFlow = Flow[String] map pathToRequest
+
 			implicit val materializer = akka.stream.ActorMaterializer()
+			source.via(reqFlow).via(conn).toMat(Sink.foreach(println))(Keep.right).run()
+		}
+
+		case request: VkRequest[_] => {
+			implicit val materializer = akka.stream.ActorMaterializer()			
 
 			val future: Future[HttpResponse] = Http(context.system).singleRequest(HttpRequest(uri = request.uri))
 
@@ -108,7 +122,7 @@ abstract class VkRequest[T] {
     }
 
 	def buildVkUri(method: String, params: (String, Any)*): String =
-          buildUri(s"https://api.vk.com/method/$method",
+          buildUri(s"/method/$method",
             (("lang" -> "3") :: params.toList): _* )
 }
 
@@ -153,10 +167,23 @@ case class FriendsRequest(id: Long) extends VkRequest[FriendsRelations] {
 	implicit val formats = DefaultFormats
     import net.liftweb.json.JsonParser._
 
+
 	val uri = buildVkUri("friends.get", "user_id" -> id)
 
 	def convert(s: String): FriendsRelations = {
         FriendsRelations(id, (parse(s) \\ "response").extract[List[Long]])
+	}
+}
+
+case class MultiFriendsRequest(ids: List[Long]) extends VkRequest[FriendsRelations] {
+	implicit val formats = DefaultFormats
+    import net.liftweb.json.JsonParser._
+
+    val uri = ""
+	val uris = ids.map(id => buildVkUri("friends.get", "user_id" -> id))
+
+	def convert(s: String): FriendsRelations = {
+        FriendsRelations(0, (parse(s) \\ "response").extract[List[Long]])
 	}
 }
 
