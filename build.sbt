@@ -14,3 +14,9 @@ libraryDependencies += "com.assembla.scala-incubator" %% "graph-core" % "1.11.0"
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.4.8"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-http-experimental" % "2.4.8"
+
+libraryDependencies += "com.github.etaty" %% "rediscala" % "1.6.0"
+
+// old repo on bintray (1.5.0 and inferior version)
+resolvers += "rediscala" at "http://dl.bintray.com/etaty/maven"
+libraryDependencies += "com.etaty.rediscala" %% "rediscala" % "1.5.0"
