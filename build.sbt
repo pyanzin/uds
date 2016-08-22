@@ -20,3 +20,7 @@ libraryDependencies += "com.github.etaty" %% "rediscala" % "1.6.0"
 // old repo on bintray (1.5.0 and inferior version)
 resolvers += "rediscala" at "http://dl.bintray.com/etaty/maven"
 libraryDependencies += "com.etaty.rediscala" %% "rediscala" % "1.5.0"
+
+// https://mvnrepository.com/artifact/org.neo4j.driver/neo4j-java-driver
+libraryDependencies += "org.neo4j.driver" % "neo4j-java-driver" % "1.0.0"
+

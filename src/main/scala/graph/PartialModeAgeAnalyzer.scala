@@ -8,7 +8,9 @@ import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 import uds.Helpers._
 
-case class PartialAgeMode(value: Int) extends SimpleProp[Int]
+case class PartialAgeMode(value: Int) extends SimpleProp[Int] {
+  def identifier = s"pamvk$value"
+}
 
 class PartialAgeModeAnalyzer(user: User) extends Block[VkGraph, VkGraph] {
   def apply(g: VkGraph): VkGraph = {

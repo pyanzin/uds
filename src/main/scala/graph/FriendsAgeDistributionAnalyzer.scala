@@ -8,7 +8,9 @@ import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 import uds.Helpers._
 
-case class FriendsAgeDistr(value: Map[Int, Int]) extends SimpleProp[Map[Int, Int]]
+case class FriendsAgeDistr(value: Map[Int, Int]) extends SimpleProp[Map[Int, Int]] {
+  def identifier = s"vkfad"
+}
 
 class FriendsAgeDistributionAnalyzer(user: User) extends Block[VkGraph, VkGraph] {
   def apply(g: VkGraph): VkGraph = {

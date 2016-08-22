@@ -8,7 +8,9 @@ import scalax.collection.edge._
 import scalax.collection.edge.Implicits._
 
 package object graph {
-  trait VkNode
+  trait VkNode extends Product {
+  	def identifier: String
+  }
   
   type VkGraph = Graph[VkNode, LUnDiEdge]
   
@@ -16,5 +18,7 @@ package object graph {
     val value: T
   }
   
-  case class FriendsCount[Int](value: Int) extends SimpleProp[Int]
+  case class FriendsCount[Int](value: Int) extends SimpleProp[Int] {
+  	val identifier = s"vkfc$value"
+  }
 }

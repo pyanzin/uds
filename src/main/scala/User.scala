@@ -10,7 +10,9 @@ case class User (
   birthDate: Option[String],
   cityId: Option[Int],
   photoUrl: String
-) extends VkNode
+) extends VkNode {
+  val identifier: String = s"vku$id"
+}
 
 object User {
   val fullDateR = """(\d+).(\d+).(\d{4})""".r

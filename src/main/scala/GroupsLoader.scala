@@ -15,7 +15,9 @@ case class Group(
   displayName: String,
   isClosed: Boolean,
   isPublicPage: Boolean
-) extends VkNode
+) extends VkNode {
+  val identifier: String = s"vkg$id"
+}
 
 class GroupsLoader(vk: Vk) extends Block[Graph[VkNode, LUnDiEdge], Graph[VkNode, LUnDiEdge]] {
   def toGroup(x: JValue) = Group(

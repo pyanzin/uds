@@ -136,4 +136,36 @@ package object ConsoleHelpers {
     val sub = RedisPubSub(channels = List("request"), patterns = List("*"), onMessage = { case Message(p, m) => analyze(m.utf8String) })
 
   }
+
+def productToMap(cc: Product) = cc.getClass.getDeclaredFields.map( _.getName ).zip( cc.productIterator.to ).toMap
+
+def toNeoRecord(node: VkNode): String = {
+    val m = productToMap(node)
+
+    val kvs = m.map(x => {
+        val value = x._2 match {
+          case Some(x: String) => s"'$x'"
+            case Some(x) => x.toString
+            case None => "null"
+            case x: String => s"'$x'"
+            case x => x.toString
+        }
+
+        s"${x._1}:$value"
+    })
+
+    s"""(${node.identifier}:${node.getClass.getSimpleName} {${kvs.mkString(",")}})"""
+}
+
+def toNeoRequest(graph: VkGraph): String = {
+  val usersPart = graph.nodes.map(x => toNeoRecord(x.value)).toList
+
+  val relPart = graph.edges.map(x => {
+    val id1 = x.head.identifier
+    val id2 = x.last.identifier
+    s"($id1)-[:friend]->($id2)"
+  }).toList
+
+  "CREATE " + (usersPart ++ relPart).mkString(",\n")
+}
 }
