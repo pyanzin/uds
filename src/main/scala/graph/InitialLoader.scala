@@ -18,7 +18,7 @@ class InitialLoader(vk: Vk) extends Block[Long, VkGraph] {
     val rels = id :: friendIds flatMap { x =>
       Try(
         vk.getFriends(x) intersect friendIds map {
-          y => LUnDiEdge(index(y), index(x))("friend").asInstanceOf[LUnDiEdge[VkNode]] }
+          y => LUnDiEdge(index(y), index(x))(Friend()).asInstanceOf[LUnDiEdge[VkNode]] }
       ).getOrElse(List())
     }
     Graph.from(friends, rels)

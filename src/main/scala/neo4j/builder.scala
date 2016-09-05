@@ -1,5 +1,11 @@
 package uds.neo4j
 
+import org.neo4j.driver.v1._
+import scala.collection.JavaConverters._
+import uds._
+import uds.graph._
+import scalax.collection.Graph
+
 trait NeoRequestEntity {
     def rangeId: String
     def wherePart: Option[String]    
@@ -7,7 +13,7 @@ trait NeoRequestEntity {
     def patternPart: String
 }
 
-case class Node[N](
+case class Node[N <: VkNode](
     whereClause: Option[String] = None,
     previousEntities: List[NeoRequestEntity] = Nil,
     nodeCounter: Int = 0,
@@ -52,12 +58,12 @@ case class Edge[E](
 
     val patternPart: String = s"[$rangeId:$typeName]"
 
-    def node[N](whereClause: String = null)(implicit mf: Manifest[N]): Node[N] = {
+    def node[N <: VkNode](whereClause: String = null)(implicit mf: Manifest[N]): Node[N] = {
         Node[N](if (whereClause == null) None else Some(whereClause),
             this :: previousEntities, nodeCounter, edgeCounter + 1)(mf)
     }
 
-    def node[N](implicit mf: Manifest[N]): Node[N] = node[N](null.asInstanceOf[String])(mf)
+    def node[N <: VkNode](implicit mf: Manifest[N]): Node[N] = node[N](null: String)(mf)
 }
 
 class Builder(entities: Seq[NeoRequestEntity]) {
@@ -68,11 +74,17 @@ class Builder(entities: Seq[NeoRequestEntity]) {
     val whereClause = if (where.isEmpty) "" else s" WHERE $where"
 
     val request = s"""MATCH $pattern$whereClause RETURN $ret"""
+
+    def convert(neoResult: StatementResult): VkGraph = {
+        val records = neoResult.asScala.toSeq
+        records.map(_.toString)
+        Graph()
+    }
 }
 
 object util {
-    def node[N](whereClause: String = null)(implicit mf: Manifest[N]): Node[N] =
+    def node[N <: VkNode](whereClause: String = null)(implicit mf: Manifest[N]): Node[N] =
             Node[N](if (whereClause == null) None else Some(whereClause), Nil, 0, 0)(mf)
 
-    def node[N](implicit mf: Manifest[N]): Node[N] = node[N](null.asInstanceOf[String])(mf)
+    def node[N <: VkNode](implicit mf: Manifest[N]): Node[N] = node[N](null.asInstanceOf[String])(mf)
 }

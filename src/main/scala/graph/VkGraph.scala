@@ -11,6 +11,8 @@ package object graph {
   trait VkNode extends Product {
   	def identifier: String
   }
+
+  case class Friend()
   
   type VkGraph = Graph[VkNode, LUnDiEdge]
   

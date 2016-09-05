@@ -22,7 +22,7 @@ class FriendsAgeDistributionAnalyzer(user: User) extends Block[VkGraph, VkGraph]
     val userNode = g.get(user)
 
     userNode.outgoing
-      .filter(_.label == "friend").flatten
+      .filter(_.label == Friend()).flatten
       .toList
       .collect(_.value match { case u: User => u.birthYear })
       .flatten
