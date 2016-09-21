@@ -136,4 +136,17 @@ package object ConsoleHelpers {
     val sub = RedisPubSub(channels = List("request"), patterns = List("*"), onMessage = { case Message(p, m) => analyze(m.utf8String) })
 
   }
+
+  def writeToDefaultNeo(g: VkGraph) {
+    import uds._, uds.graph._
+    import org.neo4j.driver.v1._
+    import uds.neo4j.nutils._
+
+    val driver = GraphDatabase.driver("bolt://localhost", AuthTokens.basic("neo4j", "pass"))
+    val session = driver.session()
+
+    val saveRequest = toNeoRequest(g)
+
+    session.run(saveRequest).consume()
+  }
 }
