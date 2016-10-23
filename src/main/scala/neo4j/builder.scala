@@ -126,7 +126,7 @@ class Builder(entities: Seq[NeoRequestEntity]) {
 
 object nutils {
     def node[N <: VkNode](whereClause: String = null)(implicit mf: Manifest[N]): Node[N] =
-            Node[N](if (whereClause == null) None else Some(whereClause), Nil, 0, 0)(mf)
+            Node[N](Option(whereClause))(mf)
 
     def node[N <: VkNode](implicit mf: Manifest[N]): Node[N] = node[N](null: String)(mf)
 
@@ -151,7 +151,7 @@ object nutils {
     }
 
     def toNeoRequest(graph: VkGraph): String = {
-      val usersPart = graph.nodes.map(x => toNeoRecord(x.value)).toList
+      val nodesPart = graph.nodes.map(x => toNeoRecord(x.value)).toList
 
       val relPart = graph.edges.map(x => {
         val id1 = x.head.identifier
@@ -159,6 +159,6 @@ object nutils {
         s"($id1)-[:Friend]->($id2)"
       }).toList
 
-      "CREATE " + (usersPart ++ relPart).mkString(",\n")
+      "CREATE " + (nodesPart ++ relPart).mkString(",\n")
     }
 }

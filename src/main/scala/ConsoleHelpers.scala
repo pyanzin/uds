@@ -149,4 +149,19 @@ package object ConsoleHelpers {
 
     session.run(saveRequest).consume()
   }
+
+  def getFriendsGraphFromNeo(userId: Long): VkGraph = {
+    import uds._, uds.graph._
+    import org.neo4j.driver.v1._
+    import uds.neo4j.nutils._
+
+    val driver = GraphDatabase.driver("bolt://localhost", AuthTokens.basic("neo4j", "pass"))
+    val session = driver.session()
+
+    val aloneFriendsRequest = node[User](s"_.id = $userId").edge[Friend].node[User].build
+    val socialFriendsRequest = node[User](s"_.id = $userId").edge[Friend].node[User].edge[Friend].node[User].edge[Friend].node[User](s"_.id = $userId").build
+
+    aloneFriendsRequest.convert(session.run(aloneFriendsRequest.request)) ++
+    socialFriendsRequest.convert(session.run(socialFriendsRequest.request))
+  }
 }
