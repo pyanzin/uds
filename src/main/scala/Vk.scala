@@ -58,11 +58,7 @@ package object uds
         val prms = params.map{ x => x._1 + "=" + x._2 }.mkString("&")
         val request = s"$url?$prms"
 
-        cache.get(request).getOrElse {
-          var result = req(request)
-          cache += request -> result
-          result
-        }
+        req(request)
       }
 
       def vkMethod(method: String, params: (String, String)*) =

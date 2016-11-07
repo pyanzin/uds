@@ -116,11 +116,22 @@ package object ConsoleHelpers {
 
         ar.typeName match {
             case "initial" => {
-                val g = new InitialLoader(vk)(ar.targetId)
 
-                   println(s"Analysis completed for ${ar.forId} with ${g.nodes.length} nodes and ${g.edges.length} edges")
+                val cachedG = getFriendsGraphFromNeo(ar.targetId)
 
-                writeResponse(s"""{"typeName": "initial", "result": ${ConsoleHelpers.toD3Graph(g)}}""")
+                if(cachedG.nodes.size > 0){
+                  println(s"Cached graph for ${ar.forId} with ${cachedG.nodes.length} nodes and ${cachedG.edges.length} edges")
+
+                  writeResponse(s"""{"typeName": "initial", "result": ${ConsoleHelpers.toD3Graph(cachedG)}}""")
+                } else {                
+                  val g = new InitialLoader(vk)(ar.targetId)
+
+                  writeToDefaultNeo(g)
+
+                  println(s"Analysis completed for ${ar.forId} with ${g.nodes.length} nodes and ${g.edges.length} edges")
+
+                  writeResponse(s"""{"typeName": "initial", "result": ${ConsoleHelpers.toD3Graph(g)}}""")
+                }
             }
             case "age" => {
                 writeResponse(s"""{"typeName": "age", "result": ${write(new DeepFriendsAgeModeAnalyzer(vk)(ar.targetId).map(x => x._1.toString -> x._2).toMap)}}""")
@@ -161,7 +172,6 @@ package object ConsoleHelpers {
     val aloneFriendsRequest = node[User](s"_.id = $userId").edge[Friend].node[User].build
     val socialFriendsRequest = node[User](s"_.id = $userId").edge[Friend].node[User].edge[Friend].node[User].edge[Friend].node[User](s"_.id = $userId").build
 
-    aloneFriendsRequest.convert(session.run(aloneFriendsRequest.request)) ++
-    socialFriendsRequest.convert(session.run(socialFriendsRequest.request))
+    aloneFriendsRequest.convert(session.run(aloneFriendsRequest.request)) ++ socialFriendsRequest.convert(session.run(socialFriendsRequest.request))
   }
 }
