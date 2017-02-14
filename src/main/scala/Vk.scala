@@ -74,7 +74,7 @@ package object uds
         usersJson map toUser
       }
 
-      def getFriends(id: Any) = {
+      def getFriends(id: Any): List[Long] = {
         val f = vkMethod("friends.get", "user_id" -> id.toString)
         (parse(f) \\ "response").extract[List[Long]]
       }
@@ -85,6 +85,11 @@ package object uds
         val JArray(citiesJson) = parse(f) \\ "response"
 
         citiesJson.map(toCityPair).toMap
+      }
+
+      def getMembers(id: Any): List[Long] = {
+        val f = vkMethod("groups.getMembers", "group_id" -> id.toString)
+        (parse(f) \\ "users").extract[List[Long]]
       }
 
       def withFields[T: Manifest](method: String, params: (String, String)*) = {
